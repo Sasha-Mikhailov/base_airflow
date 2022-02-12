@@ -12,8 +12,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.utils.dates import days_ago
 
 
-conn_string = os.getenv('AIRFLOW__CORE__SQL_ALCHEMY_CONN')
-
+CONN_STRING = os.getenv('AIRFLOW__CORE__SQL_ALCHEMY_CONN')
 BASE_URL = 'https://api.exchangerate.host/'
 
 
@@ -22,7 +21,6 @@ default_args = {
     'depends_on_past': True,
     'start_date': days_ago(2)
 }
-
 
 dag = DAG(
     dag_id='my_dag',
@@ -36,15 +34,14 @@ def get_convert_url(currency_from: str = 'BTC', currency_to: str = 'USD') -> str
 
 
 def get_rates():
-    print('HELLO WORLD')
-    # url = get_convert_url('BTC', 'USD')
-    # response = r.get(url)
-    #
-    # if response.status_code != 200:
-    #     raise RequestException(response=response)
-    #
-    # data = response.json()
-    # print(data)
+    url = get_convert_url('BTC', 'USD')
+    response = r.get(url)
+
+    if response.status_code != 200:
+        raise RequestException(response=response)
+
+    data = response.json()
+    print(data)
 
 
 start_op = DummyOperator(
