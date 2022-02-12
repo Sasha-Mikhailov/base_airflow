@@ -26,7 +26,7 @@ default_args = {
 
 dag = DAG(
     dag_id='my_dag',
-    schedule_interval='5 * * * *',
+    # schedule_interval='5 * * * *',
     default_args=default_args
 )
 
@@ -36,14 +36,15 @@ def get_convert_url(currency_from: str = 'BTC', currency_to: str = 'USD') -> str
 
 
 def get_rates():
-    url = get_convert_url('BTC', 'USD')
-    response = r.get(url)
-
-    if response.status_code != 200:
-        raise RequestException(response=response)
-
-    data = response.json()
-    print(data)
+    print('HELLO WORLD')
+    # url = get_convert_url('BTC', 'USD')
+    # response = r.get(url)
+    #
+    # if response.status_code != 200:
+    #     raise RequestException(response=response)
+    #
+    # data = response.json()
+    # print(data)
 
 
 start_op = DummyOperator(

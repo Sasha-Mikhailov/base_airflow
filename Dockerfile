@@ -8,6 +8,6 @@ USER root
 ADD requirements.txt .
 
 RUN apt-get update && apt-get install default-libmysqlclient-dev libmariadb-dev g++ -yqq
-RUN pip install -r ./requirements.txt --constraint https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt
+RUN pip install -r ./requirements.txt
 
 USER airflow
