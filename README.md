@@ -1,2 +1,2 @@
-# base_airflow
-trying out base Airflow
+# Checking out Airflow
+trying out base Airflow to get exchange rates
