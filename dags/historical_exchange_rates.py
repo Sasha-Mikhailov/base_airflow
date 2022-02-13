@@ -17,10 +17,10 @@ from common import CONN_STRING, BASE_URL, DT_FORMAT
 logger = logging.getLogger()
 
 TASK_ARGS = {
-    'currency_from': Variable.get("currency_from"),
-    'currency_to': Variable.get("currency_to"),
-    'start_date': Variable.get("start_date"),
-    'end_date': Variable.get("end_date"),
+    'currency_from': Variable.get(key="currency_from", default_var='BTC'),
+    'currency_to': Variable.get(key="currency_to", default_var='USD'),
+    'start_date': Variable.get(key="start_date", default_var='1999-01-01'),
+    'end_date': Variable.get(key="end_date", default_var=datetime.today().strptime(DT_FORMAT)),
 }
 
 default_dag_args = {
@@ -125,10 +125,10 @@ def load_data(result, start_date, end_date):
 
 
 def historical_etl(*arg, **kwargs):
-    currency_from = kwargs.get('currency_from', default='BTC')
-    currency_to = kwargs.get('currency_to', default='USD')
-    start_date = kwargs.get('start_date', default='1999-01-01')
-    end_date = kwargs.get('end_date', default=datetime.today().strptime(DT_FORMAT))
+    currency_from = kwargs.get('currency_from')
+    currency_to = kwargs.get('currency_to')
+    start_date = kwargs.get('start_date')
+    end_date = kwargs.get('end_date')
 
     logger.info(f'Requesting rates for {currency_from}/{currency_to} for {start_date}..{end_date}')
     data = get_rates(currency_from, currency_to, start_date, end_date)
