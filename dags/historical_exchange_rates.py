@@ -36,10 +36,10 @@ def get_historical_url():
 
 
 def get_historical_request_params(
-        start_date: str = '1999-01-01',
-        end_date: str = '2021-01-31',
-        base: str = 'BTC',
-        symbols: list = ['USD'],
+        start_date: str,
+        end_date: str,
+        base: str,
+        symbols: str,  # or list of strs
         source: str = 'crypto'):
     if not isinstance(symbols, list):
         symbols = [symbols]
@@ -57,7 +57,7 @@ def get_rates(currency_from='BTC', currency_to='USD', start_date='1999-01-01', e
     url = get_historical_url()
     params = get_historical_request_params(
         base=currency_from,
-        symbols=[currency_to],
+        symbols=currency_to,
         start_date=start_date,
         end_date=end_date,
     )
@@ -71,7 +71,7 @@ def get_rates(currency_from='BTC', currency_to='USD', start_date='1999-01-01', e
     return response.json()
 
 
-def conver_data_from_response(data, currency_from, currency_to):
+def convert_data_from_response(data, currency_from, currency_to):
     records = data.get('rates')
 
     if not records:
@@ -125,11 +125,7 @@ def historical_etl(*arg, **kwargs):
     logger.info(f'Requesting rates for {currency_from}/{currency_to} for {start_date}..{end_date}')
     data = get_rates(currency_from, currency_to, start_date, end_date)
 
-    result = conver_data_from_response(
-        data,
-        currency_from=currency_from,
-        currency_to=currency_to
-    )
+    result = convert_data_from_response(data, currency_from=currency_from, currency_to=currency_to)
 
     load_data(result, start_date, end_date)
 
