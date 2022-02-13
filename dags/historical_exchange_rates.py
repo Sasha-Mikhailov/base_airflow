@@ -20,7 +20,7 @@ TASK_ARGS = {
     'currency_from': Variable.get(key="currency_from", default_var='BTC'),
     'currency_to': Variable.get(key="currency_to", default_var='USD'),
     'start_date': Variable.get(key="start_date", default_var='1999-01-01'),
-    'end_date': Variable.get(key="end_date", default_var=datetime.today().strptime(DT_FORMAT)),
+    'end_date': Variable.get(key="end_date", default_var=datetime.strftime(datetime.today(), DT_FORMAT)),
 }
 
 default_dag_args = {
