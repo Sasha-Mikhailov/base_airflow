@@ -11,15 +11,11 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.utils.dates import days_ago
 
+from common import CONN_STRING, BASE_URL, DT_FORMAT
 from common.meta import rates, create_table_if_not_exists
 
 
 logger = logging.getLogger()
-
-
-CONN_STRING = os.getenv('AIRFLOW__CORE__SQL_ALCHEMY_CONN')
-BASE_URL = 'https://api.exchangerate.host/'
-DT_FORMAT = "%Y-%m-%d"
 
 
 default_args = {
@@ -29,9 +25,10 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='my_dag',
+    dag_id='get_current_rate',
     # schedule_interval='5 * * * *',
-    default_args=default_args
+    default_args=default_args,
+    catchup=False,
 )
 
 
@@ -69,8 +66,6 @@ def load_data(result):
     create_table_if_not_exists(engine, rates)
 
     with engine.connect() as conn:
-        # metadata_obj = MetaData(bind=conn)
-        # rates.metadata = metadata_obj
         query = rates.insert()
         print(f'prepeared query: {query}')
 
@@ -78,7 +73,7 @@ def load_data(result):
         print(f'inserted data ({res})')
 
 
-def etl():
+def current_etl(*args, **kwargs):
     data = get_rates()
 
     result = get_data_from_response(data)
@@ -92,9 +87,11 @@ start_op = DummyOperator(
 )
 
 get_rates_task = PythonOperator(
-    python_callable=etl,
-    task_id='get_rates_and_load_to_db',
-    dag=dag
+    python_callable=current_etl,
+    task_id='get_current_rates_and_load_to_db',
+    dag=dag,
+    # op_args=None,
+    # op_kwargs=None,
 )
 
 start_op >> get_rates_task
