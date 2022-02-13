@@ -11,15 +11,11 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.utils.dates import days_ago
 
+from common import CONN_STRING, BASE_URL, DT_FORMAT
 from common.meta import rates, create_table_if_not_exists
 
 
 logger = logging.getLogger()
-
-
-CONN_STRING = os.getenv('AIRFLOW__CORE__SQL_ALCHEMY_CONN')
-BASE_URL = 'https://api.exchangerate.host/'
-DT_FORMAT = "%Y-%m-%d"
 
 
 default_args = {
