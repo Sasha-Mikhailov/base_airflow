@@ -66,8 +66,6 @@ def load_data(result):
     create_table_if_not_exists(engine, rates)
 
     with engine.connect() as conn:
-        # metadata_obj = MetaData(bind=conn)
-        # rates.metadata = metadata_obj
         query = rates.insert()
         print(f'prepeared query: {query}')
 
