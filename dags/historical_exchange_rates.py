@@ -110,7 +110,7 @@ def load_data(result):
         print(f'inserted data ({res})')
 
 
-def etl():
+def historical_etl(*arg, **kwargs):
     currency_from = 'BTC'
     currency_to = 'USD'
 
@@ -131,8 +131,8 @@ start_op = DummyOperator(
 )
 
 get_rates_task = PythonOperator(
-    python_callable=etl,
-    task_id='get_rates_and_load_to_db',
+    python_callable=historical_etl,
+    task_id='get_historical_rates_and_load_to_db',
     dag=dag
 )
 

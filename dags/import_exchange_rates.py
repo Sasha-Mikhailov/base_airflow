@@ -74,7 +74,7 @@ def load_data(result):
         print(f'inserted data ({res})')
 
 
-def etl():
+def current_etl(*args, **kwargs):
     data = get_rates()
 
     result = get_data_from_response(data)
@@ -88,9 +88,11 @@ start_op = DummyOperator(
 )
 
 get_rates_task = PythonOperator(
-    python_callable=etl,
-    task_id='get_rates_and_load_to_db',
-    dag=dag
+    python_callable=current_etl,
+    task_id='get_current_rates_and_load_to_db',
+    dag=dag,
+    # op_args=None,
+    # op_kwargs=None,
 )
 
 start_op >> get_rates_task
