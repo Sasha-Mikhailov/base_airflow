@@ -71,26 +71,23 @@ def get_rates(currency_from='BTC', currency_to='USD', start_date='1999-01-01', e
     return response.json()
 
 
-def conver_data_from_response(data, currency_from='BTC', currency_to='USD'):
+def conver_data_from_response(data, currency_from, currency_to):
     records = data.get('rates')
 
     if not records:
-        raise ValueError('no success key in response')
-
+        raise ValueError('rates in Response are empty')
 
     logger.info(f'Got {len(records)} values from API')
-    logger.info(f'Example {[r for r in records.items()][1]}')
+    logger.info(f'Example data: {[r for r in records.items()][2]}')
     utcnow = datetime.utcnow()
 
-    result = [{
+    return [{
         'currency_from': currency_from,
         'currency_to': currency_to,
         'rate': record[currency_to],
         'date': date,
         'utc_updated_dttm': utcnow,
     } for date, record in records.items()]
-
-    return result
 
 
 def load_data(result, start_date, end_date):
