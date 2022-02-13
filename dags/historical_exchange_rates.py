@@ -78,16 +78,20 @@ def convert_data_from_response(data, currency_from, currency_to):
         raise ValueError('rates in Response are empty')
 
     logger.info(f'Got {len(records)} values from API')
-    logger.info(f'Example data: {[r for r in records.items()][:2]}')
+    logger.info(f'Example data: {[r for r in records.items()][1]}')
     utcnow = datetime.utcnow()
 
-    return [{
+    result = [{
         'currency_from': currency_from,
         'currency_to': currency_to,
         'rate': record[currency_to],
         'date': date,
         'utc_updated_dttm': utcnow,
-    } for date, record in records.items()]
+    } for date, record in records.items() if currency_to in record]
+
+    logger.info(f'Converted: {len(result)} items')
+
+    return result
 
 
 def load_data(result, start_date, end_date):
@@ -119,7 +123,7 @@ def load_data(result, start_date, end_date):
 def historical_etl(*arg, **kwargs):
     currency_from = 'BTC'
     currency_to = 'USD'
-    start_date = '2021-01-01'
+    start_date = '2022-01-01'
     end_date = '2022-02-01'
 
     logger.info(f'Requesting rates for {currency_from}/{currency_to} for {start_date}..{end_date}')
