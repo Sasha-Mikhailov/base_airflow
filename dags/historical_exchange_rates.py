@@ -107,7 +107,7 @@ def load_data(result, start_date, end_date):
             logger.info(f'deleted previous data: {delete_query}')
 
             query = rates.insert()
-            logger.info(f'prepeared query: {query}')
+            logger.info(f'prepared query: {query}')
 
             res = conn.execute(query, result)
             logger.info(f'inserted data ({res})')
