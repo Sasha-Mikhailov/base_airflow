@@ -9,25 +9,35 @@ from airflow.models.dag import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.utils.dates import days_ago
+from airflow.models import Variable
 
 from common.meta import rates, create_table_if_not_exists
-from common import CONN_STRING, BASE_URL
+from common import CONN_STRING, BASE_URL, DT_FORMAT
 
 logger = logging.getLogger()
 
-default_args = {
+HISTORICAL_PERIOD_LIMIT_DAYS = 365
+
+TASK_ARGS = {
+    'currency_from': Variable.get(key="currency_from", default_var='BTC'),
+    'currency_to': Variable.get(key="currency_to", default_var='USD'),
+    'start_date': Variable.get(key="start_date", default_var='1999-01-01'),
+    'end_date': Variable.get(key="end_date", default_var=datetime.strftime(datetime.today(), DT_FORMAT)),
+}
+
+default_dag_args = {
     'owner': 'airflow',
     # 'depends_on_past': True,
     'start_date': days_ago(1),
     'retries': 1,
     'retry_delay': timedelta(minutes=1),
+    'catchup': False,
 }
 
 dag = DAG(
     dag_id='get_historical_rates',
     description='load historical exchange rates',
-    default_args=default_args,
-    catchup=False,
+    default_args=default_dag_args,
 )
 
 
@@ -53,7 +63,7 @@ def get_historical_request_params(
     }
 
 
-def get_rates(currency_from='BTC', currency_to='USD', start_date='1999-01-01', end_date='2021-01-31',):
+def get_rates(currency_from='BTC', currency_to='USD', start_date='1999-01-01', end_date='2021-01-31', ):
     url = get_historical_url()
     params = get_historical_request_params(
         base=currency_from,
@@ -96,7 +106,8 @@ def convert_data_from_response(data, currency_from, currency_to):
 
 def load_data(result, start_date, end_date):
     if not result:
-        raise ValueError(f'result is empty: {result}')
+        logger.info(f'No results between {start_date} and {end_date}. Proceeding')
+        return
 
     engine = create_engine(CONN_STRING)
 
@@ -116,18 +127,48 @@ def load_data(result, start_date, end_date):
         logger.info(f'inserted data ({res})')
 
 
+def get_list_of_period_ranges(start_date, end_date):
+    start_dt = datetime.strptime(start_date, DT_FORMAT)
+    end_dt = datetime.strptime(end_date, DT_FORMAT)
+
+    if (end_dt - start_dt).days < HISTORICAL_PERIOD_LIMIT_DAYS:
+        return [(start_date, end_date)]
+
+    logger.info(f'period between {start_dt} and {end_date} is more than limit ({HISTORICAL_PERIOD_LIMIT_DAYS} days). Iterating')
+    periods = []
+    period_start = start_dt
+    period_end = start_dt
+
+    while period_end < end_dt:
+        period_end = min(period_start + timedelta(days=HISTORICAL_PERIOD_LIMIT_DAYS), end_dt)
+        periods.append(
+            (datetime.strftime(period_start, DT_FORMAT),
+            datetime.strftime(period_end, DT_FORMAT),)
+        )
+        period_start = period_end + timedelta(days=1)
+
+    logger.info(f'got {len(periods)} periods')
+    return periods
+
+
+
 def historical_etl(*arg, **kwargs):
-    currency_from = 'BTC'
-    currency_to = 'USD'
-    start_date = '2022-01-01'
-    end_date = '2022-02-01'
+    currency_from = kwargs.get('currency_from')
+    currency_to = kwargs.get('currency_to')
+    start_date = kwargs.get('start_date')
+    end_date = kwargs.get('end_date')
 
-    logger.info(f'Requesting rates for {currency_from}/{currency_to} for {start_date}..{end_date}')
-    data = get_rates(currency_from, currency_to, start_date, end_date)
+    periods = get_list_of_period_ranges(start_date, end_date)
 
-    result = convert_data_from_response(data, currency_from=currency_from, currency_to=currency_to)
+    for period in periods:
+        logger.info(f'\nRequesting rates for {currency_from}/{currency_to} for {period[0]}..{period[1]}')
+        data = get_rates(currency_from, currency_to, period[0], period[1])
 
-    load_data(result, start_date, end_date)
+        result = convert_data_from_response(data, currency_from=currency_from, currency_to=currency_to)
+
+        load_data(result, period[0], period[1])
+
+    logger.info(f'\nFinished')
 
 
 start_op = DummyOperator(
@@ -138,7 +179,8 @@ start_op = DummyOperator(
 get_rates_task = PythonOperator(
     python_callable=historical_etl,
     task_id='get_historical_rates_and_load_to_db',
-    dag=dag
+    dag=dag,
+    op_kwargs=TASK_ARGS,
 )
 
 start_op >> get_rates_task
