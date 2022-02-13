@@ -53,23 +53,6 @@ def get_historical_request_params(
     }
 
 
-def conver_data_from_response(data, currency_from='BTC', currency_to='USD'):
-    if not data.get('success'):
-        raise ValueError('no success key in response')
-
-    utcnow = datetime.utcnow()
-
-    result = [{
-        'currency_from': currency_from,
-        'currency_to': currency_to,
-        'rate': record[currency_to],
-        'date': date,
-        'utc_updated_dttm': utcnow,
-    } for date, record in data['rates'].items()]
-
-    return result
-
-
 def get_rates(currency_from='BTC', currency_to='USD', start_date='1999-01-01', end_date='2021-01-31',):
     url = get_historical_url()
     params = get_historical_request_params(
@@ -84,7 +67,30 @@ def get_rates(currency_from='BTC', currency_to='USD', start_date='1999-01-01', e
     if response.status_code != 200:
         raise RequestException(response=response)
 
+    logger.info(f'get response from {url}')
     return response.json()
+
+
+def conver_data_from_response(data, currency_from='BTC', currency_to='USD'):
+    records = data.get('rates')
+
+    if not records:
+        raise ValueError('no success key in response')
+
+
+    logger.info(f'Got {len(records)} values from API')
+    logger.debug(f'Example {[r for r in records.items()][1]}')
+    utcnow = datetime.utcnow()
+
+    result = [{
+        'currency_from': currency_from,
+        'currency_to': currency_to,
+        'rate': record[currency_to],
+        'date': date,
+        'utc_updated_dttm': utcnow,
+    } for date, record in records.items()]
+
+    return result
 
 
 def load_data(result, start_date, end_date):
@@ -101,13 +107,13 @@ def load_data(result, start_date, end_date):
         try:
             # delete data for same period for the sake of idempotency
             conn.execute(delete_query)
-            print(f'deleted previous data: {delete_query}')
+            logger.info(f'deleted previous data: {delete_query}')
 
             query = rates.insert()
-            print(f'prepeared query: {query}')
+            logger.info(f'prepeared query: {query}')
 
             res = conn.execute(query, result)
-            print(f'inserted data ({res})')
+            logger.info(f'inserted data ({res})')
             conn.commit()
         except:
             conn.rollback()
@@ -119,6 +125,7 @@ def historical_etl(*arg, **kwargs):
     start_date = '2021-01-01'
     end_date = '2022-02-01'
 
+    logger.info(f'Requesting rates for {currency_from}/{currency_to} for {start_date}..{end_date}')
     data = get_rates(currency_from, currency_to, start_date, end_date)
 
     result = conver_data_from_response(
