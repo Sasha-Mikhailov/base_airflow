@@ -27,7 +27,8 @@ default_args = {
 dag = DAG(
     dag_id='get_current_rate',
     # schedule_interval='5 * * * *',
-    default_args=default_args
+    default_args=default_args,
+    catchup=False,
 )
 
 
