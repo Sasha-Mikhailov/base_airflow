@@ -12,7 +12,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.utils.dates import days_ago
 
 from common.meta import rates, create_table_if_not_exists
-from common import CONN_STRING, BASE_URL, DT_FORMAT
+from common import CONN_STRING, BASE_URL
 
 
 logger = logging.getLogger()
@@ -34,10 +34,7 @@ dag = DAG(
 )
 
 
-def get_historical_url() -> str:
-    if BASE_URL[-1] != '/':
-        BASE_URL += '/'
-
+def get_historical_url():
     return BASE_URL + 'timeseries'
 
 
@@ -47,10 +44,6 @@ def get_historical_request_params(
         base: str = 'BTC',
         symbols: list = ['USD'],
         source: str = 'crypto'):
-    """
-
-    :rtype: dict
-    """
     if not isinstance(symbols, list):
         symbols = [symbols]
 
@@ -65,12 +58,12 @@ def get_historical_request_params(
 
 def conver_data_from_response(data, currency_from = 'BTC', currency_to = 'USD'):
     if not data.get('success'):
-        raise ValueError
+        raise ValueError('no success key in response')
 
     utcnow = datetime.utcnow()
 
     result = [{
-        'currency_from': base_currency,
+        'currency_from': currency_from,
         'currency_to': currency_to,
         'rate': record[currency_to],
         'date': date,
@@ -101,8 +94,6 @@ def load_data(result):
     create_table_if_not_exists(engine, rates)
 
     with engine.connect() as conn:
-        # metadata_obj = MetaData(bind=conn)
-        # rates.metadata = metadata_obj
         query = rates.insert()
         print(f'prepeared query: {query}')
 
