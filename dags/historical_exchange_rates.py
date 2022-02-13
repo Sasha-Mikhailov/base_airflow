@@ -104,20 +104,16 @@ def load_data(result, start_date, end_date):
 
     delete_query = rates.delete().where(rates.c.date.between(start_date, end_date))
 
-    with engine.connect() as conn:
-        try:
-            # delete data for same period for the sake of idempotency
-            conn.execute(delete_query)
-            logger.info(f'deleted previous data: {delete_query}')
+    with engine.begin() as transaction:
+        # delete data for same period for the sake of idempotency
+        transaction.execute(delete_query)
+        logger.info(f'deleted previous data: {delete_query}')
 
-            query = rates.insert()
-            logger.info(f'prepared query: {query}')
+        query = rates.insert()
+        logger.info(f'prepared query: {query}')
 
-            res = conn.execute(query, result)
-            logger.info(f'inserted data ({res})')
-            conn.commit()
-        except:
-            conn.rollback()
+        res = transaction.execute(query, result)
+        logger.info(f'inserted data ({res})')
 
 
 def historical_etl(*arg, **kwargs):
