@@ -27,7 +27,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='my_dag',
+    dag_id='get_historical_rates',
     description='load historical exchange rates',
     default_args=default_args,
     catchup=False,
