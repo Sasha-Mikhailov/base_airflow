@@ -86,7 +86,7 @@ def convert_data_from_response(data, currency_from, currency_to):
         'currency_to': currency_to,
         'rate': record[currency_to],
         'date': date,
-        'utc_updated_dttm': utcnow,
+        'utc_created_dttm': utcnow,
     } for date, record in records.items() if currency_to in record]
 
     logger.info(f'Converted: {len(result)} items')
