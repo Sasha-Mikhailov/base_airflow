@@ -102,7 +102,7 @@ def load_data(result, start_date, end_date):
 
     create_table_if_not_exists(engine, rates)
 
-    delete_query = rates.delete().where(rates.date.between(start_date, end_date))
+    delete_query = rates.delete().where(rates.c.date.between(start_date, end_date))
 
     with engine.connect() as conn:
         try:
