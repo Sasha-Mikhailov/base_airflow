@@ -1,10 +1,9 @@
-import os
 import logging
 from datetime import datetime, timedelta
 
 import requests as r
 from requests.exceptions import RequestException
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine
 
 from airflow.models.dag import DAG
 from airflow.operators.python import PythonOperator
@@ -14,9 +13,7 @@ from airflow.utils.dates import days_ago
 from common.meta import rates, create_table_if_not_exists
 from common import CONN_STRING, BASE_URL
 
-
 logger = logging.getLogger()
-
 
 default_args = {
     'owner': 'airflow',
@@ -56,7 +53,7 @@ def get_historical_request_params(
     }
 
 
-def conver_data_from_response(data, currency_from = 'BTC', currency_to = 'USD'):
+def conver_data_from_response(data, currency_from='BTC', currency_to='USD'):
     if not data.get('success'):
         raise ValueError('no success key in response')
 
@@ -73,11 +70,13 @@ def conver_data_from_response(data, currency_from = 'BTC', currency_to = 'USD'):
     return result
 
 
-def get_rates(currency_from = 'BTC', currency_to = 'USD'):
+def get_rates(currency_from='BTC', currency_to='USD', start_date='1999-01-01', end_date='2021-01-31',):
     url = get_historical_url()
     params = get_historical_request_params(
         base=currency_from,
         symbols=[currency_to],
+        start_date=start_date,
+        end_date=end_date,
     )
 
     response = r.get(url, params=params)
@@ -88,24 +87,39 @@ def get_rates(currency_from = 'BTC', currency_to = 'USD'):
     return response.json()
 
 
-def load_data(result):
+def load_data(result, start_date, end_date):
+    if not result:
+        raise ValueError(f'result is empty: {result}')
+
     engine = create_engine(CONN_STRING)
 
     create_table_if_not_exists(engine, rates)
 
-    with engine.connect() as conn:
-        query = rates.insert()
-        print(f'prepeared query: {query}')
+    delete_query = f'delete where data between {start_date} and {end_date}'
 
-        res = conn.execute(query, result)
-        print(f'inserted data ({res})')
+    with engine.connect() as conn:
+        try:
+            # delete data for same period for the sake of idempotency
+            conn.execute(delete_query)
+            print(f'deleted previous data: {delete_query}')
+
+            query = rates.insert()
+            print(f'prepeared query: {query}')
+
+            res = conn.execute(query, result)
+            print(f'inserted data ({res})')
+            conn.commit()
+        except:
+            conn.rollback()
 
 
 def historical_etl(*arg, **kwargs):
     currency_from = 'BTC'
     currency_to = 'USD'
+    start_date = '2021-01-01'
+    end_date = '2022-02-01'
 
-    data = get_rates(currency_from, currency_to)
+    data = get_rates(currency_from, currency_to, start_date, end_date)
 
     result = conver_data_from_response(
         data,
@@ -113,7 +127,7 @@ def historical_etl(*arg, **kwargs):
         currency_to=currency_to
     )
 
-    load_data(result)
+    load_data(result, start_date, end_date)
 
 
 start_op = DummyOperator(
