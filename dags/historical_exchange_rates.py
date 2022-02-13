@@ -79,7 +79,7 @@ def conver_data_from_response(data, currency_from='BTC', currency_to='USD'):
 
 
     logger.info(f'Got {len(records)} values from API')
-    logger.debug(f'Example {[r for r in records.items()][1]}')
+    logger.info(f'Example {[r for r in records.items()][1]}')
     utcnow = datetime.utcnow()
 
     result = [{
