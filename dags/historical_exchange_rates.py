@@ -16,6 +16,8 @@ from common import CONN_STRING, BASE_URL, DT_FORMAT
 
 logger = logging.getLogger()
 
+HISTORICAL_PERIOD_LIMIT_DAYS = 365
+
 TASK_ARGS = {
     'currency_from': Variable.get(key="currency_from", default_var='BTC'),
     'currency_to': Variable.get(key="currency_to", default_var='USD'),
@@ -124,18 +126,48 @@ def load_data(result, start_date, end_date):
         logger.info(f'inserted data ({res})')
 
 
+def get_list_of_period_ranges(start_date, end_date):
+    start_dt = datetime.strptime(start_date, DT_FORMAT)
+    end_dt = datetime.strptime(end_date, DT_FORMAT)
+
+    if (end_dt - start_dt).days < HISTORICAL_PERIOD_LIMIT_DAYS:
+        return [(start_date, end_date)]
+
+    logger.info(f'period between {start_dt} and {end_date} is more than limit ({HISTORICAL_PERIOD_LIMIT_DAYS} days). Iterating')
+    periods = []
+    period_start = start_dt
+    period_end = start_dt
+
+    while period_end < end_dt:
+        period_end = min(period_start + timedelta(days=HISTORICAL_PERIOD_LIMIT_DAYS), end_dt)
+        periods.append(
+            (datetime.strftime(period_start, DT_FORMAT),
+            datetime.strftime(period_end, DT_FORMAT),)
+        )
+        period_start = period_end + timedelta(days=1)
+
+    logger.info(f'got {len(periods)} periods')
+    return periods
+
+
+
 def historical_etl(*arg, **kwargs):
     currency_from = kwargs.get('currency_from')
     currency_to = kwargs.get('currency_to')
     start_date = kwargs.get('start_date')
     end_date = kwargs.get('end_date')
 
-    logger.info(f'Requesting rates for {currency_from}/{currency_to} for {start_date}..{end_date}')
-    data = get_rates(currency_from, currency_to, start_date, end_date)
+    periods = get_list_of_period_ranges(start_date, end_date)
 
-    result = convert_data_from_response(data, currency_from=currency_from, currency_to=currency_to)
+    for period in periods:
+        logger.info(f'\nRequesting rates for {currency_from}/{currency_to} for {period[0]}..{period[1]}')
+        data = get_rates(currency_from, currency_to, period[0], period[1])
 
-    load_data(result, start_date, end_date)
+        result = convert_data_from_response(data, currency_from=currency_from, currency_to=currency_to)
+
+        load_data(result, period[0], period[1])
+
+    logger.info(f'\nFinished')
 
 
 start_op = DummyOperator(
