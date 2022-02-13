@@ -106,7 +106,8 @@ def convert_data_from_response(data, currency_from, currency_to):
 
 def load_data(result, start_date, end_date):
     if not result:
-        raise ValueError(f'result is empty: {result}')
+        logger.info(f'No results between {start_date} and {end_date}. Proceeding')
+        return
 
     engine = create_engine(CONN_STRING)
 
