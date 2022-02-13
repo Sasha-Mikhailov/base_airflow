@@ -78,7 +78,7 @@ def convert_data_from_response(data, currency_from, currency_to):
         raise ValueError('rates in Response are empty')
 
     logger.info(f'Got {len(records)} values from API')
-    logger.info(f'Example data: {[r for r in records.items()][2]}')
+    logger.info(f'Example data: {[r for r in records.items()][:2]}')
     utcnow = datetime.utcnow()
 
     return [{
