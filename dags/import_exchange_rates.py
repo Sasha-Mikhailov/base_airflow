@@ -25,7 +25,7 @@ DT_FORMAT = "%Y-%m-%d"
 default_args = {
     'owner': 'airflow',
     # 'depends_on_past': True,
-    # 'start_date': days_ago(2)
+    'start_date': days_ago(1)
 }
 
 dag = DAG(
