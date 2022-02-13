@@ -11,7 +11,7 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.utils.dates import days_ago
 
-from common.meta import rates, create_if_not_exists
+from common.meta import rates, create_table_if_not_exists
 
 
 logger = logging.getLogger()
@@ -66,7 +66,7 @@ def get_rates():
 def load_data(result):
     engine = create_engine(CONN_STRING)
 
-    create_if_not_exists(engine, rates.name)
+    create_table_if_not_exists(engine, rates.name)
 
     with engine.connect() as conn:
         metadata_obj = MetaData()
