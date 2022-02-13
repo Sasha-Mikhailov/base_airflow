@@ -1,4 +1,3 @@
-"""This dag only runs some simple tasks to test Airflow's task execution."""
 import os
 import logging
 from datetime import datetime, timedelta
@@ -12,7 +11,7 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.utils.dates import days_ago
 
-from .meta import rates, create_if_not_exists
+from dags.meta import rates, create_if_not_exists
 
 
 logger = logging.getLogger()
