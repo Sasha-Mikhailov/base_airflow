@@ -24,8 +24,8 @@ DT_FORMAT = "%Y-%m-%d"
 
 default_args = {
     'owner': 'airflow',
-    'depends_on_past': True,
-    'start_date': days_ago(2)
+    # 'depends_on_past': True,
+    # 'start_date': days_ago(2)
 }
 
 dag = DAG(
@@ -66,13 +66,16 @@ def get_rates():
 def load_data(result):
     engine = create_engine(CONN_STRING)
 
-    create_table_if_not_exists(engine, rates.name)
+    create_table_if_not_exists(engine, rates)
 
     with engine.connect() as conn:
-        metadata_obj = MetaData()
-        rates.metadata = metadata_obj
+        # metadata_obj = MetaData(bind=conn)
+        # rates.metadata = metadata_obj
         query = rates.insert()
-        conn.execute(query, result)
+        print(f'prepeared query: {query}')
+
+        res = conn.execute(query, result)
+        print(f'inserted data ({res})')
 
 
 def etl():
@@ -90,7 +93,7 @@ start_op = DummyOperator(
 
 get_rates_task = PythonOperator(
     python_callable=etl,
-    task_id='get_rates',
+    task_id='get_rates_and_load_to_db',
     dag=dag
 )
 

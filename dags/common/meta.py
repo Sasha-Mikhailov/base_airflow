@@ -1,14 +1,9 @@
-from sqlalchemy.dialects.postgresql import VARCHAR, NUMERIC, DATE, TIMESTAMP
 from sqlalchemy import Table, Column, MetaData, Numeric, Date, String, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-
-
-Base = declarative_base()
-metadata = MetaData()
+from sqlalchemy.engine import Engine
 
 
 rates = Table(
-    'exchange_rates', Base.metadata,
+    'exchange_rates', MetaData(),
     Column('currency_from', String()),
     Column('currency_to', String()),
     Column('date', Date()),
@@ -18,10 +13,11 @@ rates = Table(
 )
 
 
-def create_table_if_not_exists(engine, table_name):
-    if engine.dialect.has_table(engine, table_name):
-        return
+def create_table_if_not_exists(engine: Engine, table: Table):
+    with engine.connect() as conn:
+        if engine.dialect.has_table(conn, table.name):
+            print(f'Table {table.name} exists!')
+            return
 
-    metadata = MetaData(engine)
-    rates.metadata = metadata
-    metadata.create_all()
+        table.metadata.create_all(conn)
+        print(f'Table {table.name} created')
