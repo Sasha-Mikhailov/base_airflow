@@ -17,7 +17,7 @@ logger = logging.getLogger()
 
 default_args = {
     'owner': 'airflow',
-    'depends_on_past': True,
+    # 'depends_on_past': True,
     'start_date': days_ago(1),
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
