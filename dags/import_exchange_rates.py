@@ -1,17 +1,17 @@
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import requests as r
 from requests.exceptions import RequestException
-from sqlalchemy import create_engine, Table, MetaData
+from sqlalchemy import create_engine, MetaData
 
 from airflow.models.dag import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.utils.dates import days_ago
 
-from dags.meta import rates, create_if_not_exists
+from common.meta import rates, create_if_not_exists
 
 
 logger = logging.getLogger()
