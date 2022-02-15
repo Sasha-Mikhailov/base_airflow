@@ -1,4 +1,4 @@
-# Airflow 
+# Airflow + ExchangeRates + PostgreSQL
 **I.** скопировать репозиторий 
 ```bash
 git clone https://github.com/Sasha-Mikhailov/base_airflow.git
