@@ -15,9 +15,14 @@ docker-compose up
 
 **IV.** Должен заработать webserver для Airflow. Зайти на http://localhost:8080 с логином-паролем `airflow`
 
+<img width="1184" alt="image" src="https://user-images.githubusercontent.com/51232538/154117829-1f87b1d4-02a9-49f4-98a2-d042941baef4.png">
+
+
 **V.** запустить `DAG'и`:
 1. **get_current_rate** — регулярный запуск, запрашивающий текущий курс
 2. **get_historical_rates** - исторический пересчёт за конкретный период
+
+<img width="1175" alt="image" src="https://user-images.githubusercontent.com/51232538/154117884-f4812efe-3a8f-4031-9441-b2173ad34b3b.png">
 
 
 ### Таски
@@ -28,6 +33,9 @@ docker-compose up
 - окончание периода
 - код валюты из
 - код валюты в
+
+<img width="551" alt="image" src="https://user-images.githubusercontent.com/51232538/154117713-40640aef-420e-4ab9-a5a0-60b2c914b79b.png">
+
 
 при записи данных в базу предварительно удаляет строки за тот же период (в целях идемпотентности).
 
