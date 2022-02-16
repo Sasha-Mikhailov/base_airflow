@@ -1,0 +1,6 @@
+{
+    "currency_from" : "BTC",
+    "currency_to" : "USD",
+    "start_date" : "1999-01-01",
+    "end_date" : "2022-02-28"
+}
